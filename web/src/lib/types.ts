@@ -18,6 +18,10 @@ export interface Attachment {
   size: number;
 }
 
+/** What the shared thumb/viewer components need — both `Attachment` and
+ * `CarDoc` satisfy this structurally, so either can be passed directly. */
+export type AttachmentLike = Pick<Attachment, "s3Key" | "fileName" | "contentType">;
+
 export interface CarDoc {
   id: string;
   carId: string;

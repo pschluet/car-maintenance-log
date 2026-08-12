@@ -26,7 +26,13 @@ const presignClient = process.env.S3_PUBLIC_ENDPOINT
   ? new S3Client({ endpoint: process.env.S3_PUBLIC_ENDPOINT, forcePathStyle })
   : client;
 
-const PRESIGN_TTL_SECONDS = 5 * 60;
+// Uploads only need to survive the moment the browser PUTs to the signed
+// URL, so that TTL stays short. Downloads are re-signed per request by
+// /api/uploads/image (see web/src/lib/attachment-url.ts) and only need to
+// outlive following a single redirect, but a longer window makes a stray
+// cached redirect harmless too.
+const UPLOAD_TTL_SECONDS = 5 * 60;
+const DOWNLOAD_TTL_SECONDS = 60 * 60;
 
 export function buildAttachmentKey(carId: string, kind: string, fileName: string): string {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -35,12 +41,12 @@ export function buildAttachmentKey(carId: string, kind: string, fileName: string
 
 export async function presignUpload(key: string, contentType: string): Promise<string> {
   const command = new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType });
-  return getSignedUrl(presignClient, command, { expiresIn: PRESIGN_TTL_SECONDS });
+  return getSignedUrl(presignClient, command, { expiresIn: UPLOAD_TTL_SECONDS });
 }
 
 export async function presignDownload(key: string): Promise<string> {
   const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
-  return getSignedUrl(presignClient, command, { expiresIn: PRESIGN_TTL_SECONDS });
+  return getSignedUrl(presignClient, command, { expiresIn: DOWNLOAD_TTL_SECONDS });
 }
 
 export async function deleteObject(key: string): Promise<void> {

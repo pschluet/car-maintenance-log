@@ -6,7 +6,9 @@ import { useState } from "react";
 import { apiFetch } from "@/lib/apiClient";
 import { formatDateDisplay, formatMileage, mechanicDisplayName, quickJobLabel } from "@/lib/format";
 import type { MaintenanceEntry, Mechanic } from "@/lib/types";
+import { AttachmentViewer } from "./attachment-viewer";
 import { Card } from "./ui/card";
+import { PaperclipIcon } from "./ui/icons";
 
 export function EntriesList({
   carId,
@@ -19,6 +21,7 @@ export function EntriesList({
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | undefined>();
+  const [viewingEntryId, setViewingEntryId] = useState<string | undefined>();
 
   async function handleDelete(entryId: string) {
     setDeleting(entryId);
@@ -34,6 +37,8 @@ export function EntriesList({
       </Card>
     );
   }
+
+  const viewingEntry = entries.find((e) => e.id === viewingEntryId);
 
   return (
     <div className="space-y-3">
@@ -82,12 +87,29 @@ export function EntriesList({
           )}
 
           {entry.attachments.length > 0 && (
-            <p className="mt-2 text-xs text-ink-muted">
-              {entry.attachments.length} attachment{entry.attachments.length === 1 ? "" : "s"}
-            </p>
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setViewingEntryId(entry.id)}
+                aria-label={`View ${entry.attachments.length} attachment${
+                  entry.attachments.length === 1 ? "" : "s"
+                }`}
+                className="flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium text-accent hover:bg-accent-soft"
+              >
+                <PaperclipIcon className="h-4 w-4" />
+                {entry.attachments.length}
+              </button>
+            </div>
           )}
         </Card>
       ))}
+
+      {viewingEntry && (
+        <AttachmentViewer
+          attachments={viewingEntry.attachments}
+          onClose={() => setViewingEntryId(undefined)}
+        />
+      )}
     </div>
   );
 }

@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { CarCard } from "@/components/car-card";
 import { PageHeader } from "@/components/ui/card";
-import { listCars } from "@/lib/repo/cars";
-import { getCarWithDetails } from "@/lib/repo/cars";
-import { presignDownload } from "@/lib/s3";
+import { getCarWithDetails, listCars } from "@/lib/repo/cars";
 
 export default async function GaragePage() {
   const cars = await listCars();
@@ -11,9 +9,8 @@ export default async function GaragePage() {
   const cards = await Promise.all(
     cars.map(async (car) => {
       const details = await getCarWithDetails(car.id);
-      const cover = details?.photos[0];
-      const coverUrl = cover ? await presignDownload(cover.s3Key) : undefined;
-      return { car, coverUrl };
+      const coverS3Key = details?.photos[0]?.s3Key;
+      return { car, coverS3Key };
     })
   );
 
@@ -42,8 +39,8 @@ export default async function GaragePage() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {cards.map(({ car, coverUrl }) => (
-            <CarCard key={car.id} car={car} coverUrl={coverUrl} />
+          {cards.map(({ car, coverS3Key }) => (
+            <CarCard key={car.id} car={car} coverS3Key={coverS3Key} />
           ))}
         </div>
       )}

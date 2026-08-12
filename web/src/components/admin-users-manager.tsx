@@ -87,7 +87,10 @@ export function AdminUsersManager({
               <div>
                 <p className="text-sm font-medium text-ink">{u.email}</p>
                 <p className="text-xs text-ink-muted">
-                  {u.status} {u.isAdmin && "· Admin"}
+                  {/* This app is passwordless (email-OTP CUSTOM_AUTH), so Cognito's
+                      UserStatus is always FORCE_CHANGE_PASSWORD — no account ever
+                      completes a password lifecycle. `enabled` is what's meaningful. */}
+                  {u.enabled ? "Active" : "Disabled"} {u.isAdmin && "· Admin"}
                 </p>
               </div>
               {u.email.toLowerCase() !== currentUserEmail.toLowerCase() && (

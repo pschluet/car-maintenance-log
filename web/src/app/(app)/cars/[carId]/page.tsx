@@ -7,17 +7,10 @@ import { EntriesList } from "@/components/entries-list";
 import { TireSetsSection } from "@/components/tire-sets-section";
 import { Button } from "@/components/ui/button";
 import { Card, PageHeader } from "@/components/ui/card";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { getCarWithDetails } from "@/lib/repo/cars";
 import { listEntries } from "@/lib/repo/entries";
 import { listMechanics } from "@/lib/repo/mechanics";
-import { presignDownload } from "@/lib/s3";
-import type { CarDoc } from "@/lib/types";
-
-async function withViewUrls(docs: CarDoc[]) {
-  return Promise.all(
-    docs.map(async (doc) => ({ ...doc, viewUrl: await presignDownload(doc.s3Key) }))
-  );
-}
 
 export default async function CarDetailPage({ params }: { params: Promise<{ carId: string }> }) {
   const { carId } = await params;
@@ -28,11 +21,9 @@ export default async function CarDetailPage({ params }: { params: Promise<{ carI
   ]);
   if (!car) notFound();
 
-  const [photos, insuranceDocs, registrationDocs] = await Promise.all([
-    withViewUrls(car.photos),
-    withViewUrls(car.insuranceDocs),
-    withViewUrls(car.registrationDocs),
-  ]);
+  const docCount = car.insuranceDocs.length + car.registrationDocs.length;
+  const tireSetsSummary = `${car.tireSets.length} tire set${car.tireSets.length === 1 ? "" : "s"}`;
+  const docsSummary = `${docCount} document${docCount === 1 ? "" : "s"}`;
 
   return (
     <div className="space-y-5">
@@ -46,7 +37,7 @@ export default async function CarDetailPage({ params }: { params: Promise<{ carI
         }
       />
 
-      <CarPhotosSection carId={carId} photos={photos} />
+      <CarPhotosSection carId={carId} photos={car.photos} />
 
       <Card>
         <h2 className="mb-3 font-medium text-ink">Specifications</h2>
@@ -70,15 +61,24 @@ export default async function CarDetailPage({ params }: { params: Promise<{ carI
         </dl>
       </Card>
 
-      <TireSetsSection carId={carId} tireSets={car.tireSets} />
-
-      <CarDocsSection carId={carId} kind="INSURANCE" title="Insurance card" docs={insuranceDocs} />
-      <CarDocsSection
-        carId={carId}
-        kind="REGISTRATION"
-        title="Registration"
-        docs={registrationDocs}
-      />
+      <CollapsibleSection
+        title="Tire pressure & documents"
+        summary={`${tireSetsSummary} · ${docsSummary}`}
+      >
+        <TireSetsSection carId={carId} tireSets={car.tireSets} />
+        <CarDocsSection
+          carId={carId}
+          kind="INSURANCE"
+          title="Insurance card"
+          docs={car.insuranceDocs}
+        />
+        <CarDocsSection
+          carId={carId}
+          kind="REGISTRATION"
+          title="Registration"
+          docs={car.registrationDocs}
+        />
+      </CollapsibleSection>
 
       <div>
         <div className="mb-3 flex items-center justify-between">

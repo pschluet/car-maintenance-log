@@ -5,6 +5,7 @@ import { apiJson } from "@/lib/apiClient";
 import { downscaleImage } from "@/lib/image";
 import type { Attachment } from "@/lib/types";
 import { Button } from "./ui/button";
+import { CameraIcon } from "./ui/icons";
 
 interface Props {
   carId: string;
@@ -16,6 +17,7 @@ interface Props {
 
 export function AttachmentUploader({ carId, kind, multiple, label, onUploaded }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -48,29 +50,53 @@ export function AttachmentUploader({ carId, kind, multiple, label, onUploaded }:
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setBusy(false);
-      if (inputRef.current) inputRef.current.value = "";
+      e.target.value = "";
     }
   }
 
   return (
     <div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,application/pdf"
-        capture="environment"
-        multiple={multiple}
-        className="hidden"
-        onChange={handleChange}
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        disabled={busy}
-        onClick={() => inputRef.current?.click()}
-      >
-        {busy ? "Uploading…" : (label ?? "Add photo")}
-      </Button>
+      <div className="flex items-center gap-2">
+        {/* No `capture` here — that's what lets iOS Safari offer Photo
+            Library and Choose File in addition to the camera, and lets
+            `multiple` actually work (capture forces single-shot camera). */}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,application/pdf"
+          multiple={multiple}
+          className="hidden"
+          onChange={handleChange}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+        >
+          {busy ? "Uploading…" : (label ?? "Add photo")}
+        </Button>
+
+        {/* One-tap shortcut straight to the camera, kept separate so the
+            primary picker above isn't forced into camera-only mode. */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleChange}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy}
+          onClick={() => cameraInputRef.current?.click()}
+          aria-label="Take photo"
+        >
+          <CameraIcon className="h-4 w-4" />
+        </Button>
+      </div>
       {error && <p className="mt-1.5 text-sm text-danger">{error}</p>}
     </div>
   );
