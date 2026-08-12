@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { AdminUsersManager } from "@/components/admin-users-manager";
+import { MaintenanceLogImporter } from "@/components/maintenance-log-importer";
 import { Card, PageHeader } from "@/components/ui/card";
 import { listUsers } from "@/lib/cognito";
+import { listCars } from "@/lib/repo/cars";
 import { getCurrentUser } from "@/lib/session";
 
 export default async function AdminPage() {
@@ -11,29 +13,35 @@ export default async function AdminPage() {
   const user = await getCurrentUser();
   if (!user?.isAdmin) redirect("/");
 
+  const cars = await listCars();
+
   // There's no local Cognito emulator (docker-compose only stands in for
   // DynamoDB and S3 — see LOCAL_AUTH in web/src/lib/session.ts), so user
-  // management genuinely can't be exercised outside a deployed stack.
-  // Skip the real call rather than crashing the page on the resulting
-  // credential error.
-  if (process.env.LOCAL_AUTH === "true") {
-    return (
-      <div>
-        <PageHeader title="Admin" subtitle="Manage who can sign in" />
-        <Card className="text-sm text-ink-muted">
-          User management talks to Cognito directly and has no local stand-in — try this against the
-          deployed app at {process.env.SITE_URL ?? "cars.pauldev.io"}.
-        </Card>
-      </div>
-    );
-  }
-
-  const users = await listUsers();
+  // management genuinely can't be exercised outside a deployed stack. The CSV
+  // importer only touches DynamoDB, though, so it works locally either way.
+  const isLocal = process.env.LOCAL_AUTH === "true";
 
   return (
-    <div>
-      <PageHeader title="Admin" subtitle="Manage who can sign in" />
-      <AdminUsersManager initialUsers={users} currentUserEmail={user.email} />
+    <div className="space-y-8">
+      <div>
+        <PageHeader title="Admin" subtitle="Manage who can sign in" />
+        {isLocal ? (
+          <Card className="text-sm text-ink-muted">
+            User management talks to Cognito directly and has no local stand-in — try this against
+            the deployed app at {process.env.SITE_URL ?? "cars.pauldev.io"}.
+          </Card>
+        ) : (
+          <AdminUsersManager initialUsers={await listUsers()} currentUserEmail={user.email} />
+        )}
+      </div>
+
+      <div>
+        <PageHeader
+          title="Import maintenance log"
+          subtitle="Upload a CSV to bulk-add entries to a car"
+        />
+        <MaintenanceLogImporter cars={cars} />
+      </div>
     </div>
   );
 }

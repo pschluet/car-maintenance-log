@@ -52,6 +52,13 @@ export const entryInputSchema = z.object({
 });
 export type EntryInput = z.infer<typeof entryInputSchema>;
 
+export const entryImportSchema = z.object({
+  // Cap the batch so a malformed upload can't fan out into thousands of
+  // writes; a household maintenance log is realistically dozens of rows.
+  entries: z.array(entryInputSchema).min(1, "No entries to import").max(1000),
+});
+export type EntryImportInput = z.infer<typeof entryImportSchema>;
+
 export const mechanicInputSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   address: z.string().trim().max(200).optional(),
