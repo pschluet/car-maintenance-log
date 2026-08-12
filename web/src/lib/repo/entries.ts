@@ -39,6 +39,22 @@ export async function createEntry(
   return entry;
 }
 
+export async function createEntries(
+  carId: string,
+  inputs: EntryInput[],
+  createdBy: string
+): Promise<MaintenanceEntry[]> {
+  // Sequential rather than Promise.all: bulk imports can be hundreds of rows,
+  // and firing every PutItem at once risks tripping DynamoDB throttling on the
+  // on-demand table. The volume here is small enough that the latency cost of
+  // awaiting each write is a non-issue.
+  const created: MaintenanceEntry[] = [];
+  for (const input of inputs) {
+    created.push(await createEntry(carId, input, createdBy));
+  }
+  return created;
+}
+
 export async function updateEntry(
   carId: string,
   entryId: string,
