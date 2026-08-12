@@ -82,23 +82,24 @@ export function EntriesList({
             </div>
           )}
 
-          {entry.notes && (
-            <p className="mt-2 whitespace-pre-wrap text-sm text-ink">{entry.notes}</p>
-          )}
-
-          {entry.attachments.length > 0 && (
-            <div className="mt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setViewingEntryId(entry.id)}
-                aria-label={`View ${entry.attachments.length} attachment${
-                  entry.attachments.length === 1 ? "" : "s"
-                }`}
-                className="flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium text-accent hover:bg-accent-soft"
-              >
-                <PaperclipIcon className="h-4 w-4" />
-                {entry.attachments.length}
-              </button>
+          {(entry.notes || entry.attachments.length > 0) && (
+            <div className="mt-2 flex items-start gap-3">
+              {entry.notes && (
+                <p className="flex-1 whitespace-pre-wrap text-sm text-ink">{entry.notes}</p>
+              )}
+              {entry.attachments.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setViewingEntryId(entry.id)}
+                  aria-label={`View ${entry.attachments.length} attachment${
+                    entry.attachments.length === 1 ? "" : "s"
+                  }`}
+                  className="ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium text-accent hover:bg-accent-soft"
+                >
+                  <PaperclipIcon className="h-4 w-4" />
+                  {entry.attachments.length}
+                </button>
+              )}
             </div>
           )}
         </Card>
