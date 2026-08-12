@@ -1,0 +1,8 @@
+**/node_modules
+**/.next
+.git
+.github
+infra/cdk.out
+infra/dist
+*.md
+.claude

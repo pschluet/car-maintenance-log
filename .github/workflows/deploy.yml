@@ -1,0 +1,59 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  # Deterministic — this is the fixed roleName set in the CDK stack. The
+  # role itself is created by CDK, so the very first deploy must be run
+  # locally (see README.md) before this workflow can assume it.
+  DEPLOY_ROLE_ARN: arn:aws:iam::435432815368:role/car-maintenance-log-github-deploy
+  STACK_NAME: CarMaintenanceStack
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy (builds and pushes the app image, then updates the stack)
+        working-directory: infra
+        run: npx cdk deploy --require-approval never --outputs-file outputs.json
+
+      - name: Invalidate CloudFront cache
+        working-directory: infra
+        run: |
+          DISTRIBUTION_ID=$(jq -r '.["${{ env.STACK_NAME }}"].DistributionId' outputs.json)
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+
+      - name: Summary
+        working-directory: infra
+        run: |
+          echo "### Deployed :rocket:" >> "$GITHUB_STEP_SUMMARY"
+          echo "$(jq -r '.["${{ env.STACK_NAME }}"].SiteUrl' outputs.json)" >> "$GITHUB_STEP_SUMMARY"

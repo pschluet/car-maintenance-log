@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Deliberately not shadcn's default indigo/slate: a warm
+ * amber accent against neutral zinc surfaces reads as "garage tool" rather
+ * than "generic SaaS dashboard," while staying restrained and professional.
+ */
+@theme {
+  --color-surface: #fafaf9;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f4f4f3;
+  --color-border: #e7e5e4;
+  --color-ink: #1c1917;
+  --color-ink-muted: #6b6863;
+  --color-accent: #c2620a;
+  --color-accent-strong: #9a4d08;
+  --color-accent-soft: #fdecd8;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+  --color-success: #15803d;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-surface: #17140f;
+    --color-surface-raised: #221e17;
+    --color-surface-sunken: #12100c;
+    --color-border: #3a342a;
+    --color-ink: #f5f0e8;
+    --color-ink-muted: #b3aa9c;
+    --color-accent: #e8912f;
+    --color-accent-strong: #f4a94f;
+    --color-accent-soft: #3a2a12;
+    --color-danger: #f87171;
+    --color-danger-soft: #3a1414;
+    --color-success: #4ade80;
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  border-color: var(--color-border);
+}

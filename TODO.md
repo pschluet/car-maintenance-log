@@ -1,0 +1,38 @@
+# Task
+I want you to create an app that myself and my wife can use to track maintenance activities for our vehicles. It will have the following features and requirements:
+
+- UI designed for mobile first, but it should work for tablet/desktop as well
+- UI should look polished, professional, and modern/up-to-date
+- Should allow users to enter mileage, date (initially auto-populate to current date), and what maintenance work was performed
+- Should allow user to enter multiple cars and have the following for each car:
+  - Maintenance log
+  - Car specifications:
+    - Tire pressure (multiple tire sets per car)
+    - VIN
+    - License plate
+    - Photos of the car
+    - Year the car was manufactured
+    - Color
+    - Current car insurance (image(s))
+    - Current registration (image(s))
+- Maintenance log should have quick buttons or dropdown to optionally select common maintenance jobs (oil change, cabin air filter change, engine air filter change, tire rotation) - should allow selection of multiple quick options in one entry
+- Allow user to attach files (could be photos, receipts, etc.) to a maintenance entry
+- Allow user to enter mechanics to indicate who performed the work with the following about each mechanic:
+  - Name
+  - Address
+  - Phone
+- Ability to associate a mechanic with a maintenance log entry (default is self - i.e. DIY - I did it myself)
+- Create an admin user. Should have an admin page where admin can add additional users (even admin users).
+- Tech stack (AWS):
+  - NextJS/React/Vite/Typescript
+  - Lambda Web Adapter + custom docker image so it's easy to run the app locally
+  - Cognito passwordless auth (via email and the already existing SES) - the token should only by six characters
+  - DynamoDB for the database
+  - Full unit-test suite
+  - CI/CD pipeline in GitHub actions
+    - CI (lint, format check, test)
+  - Infrastructure using AWS CDK
+  - Tag all resources with the following tags:
+    - REPO: "https://github.com/pschluet/car-maintenance-log"
+    - SITE: "cars.pauldev.io"
+- Deploy to cars.pauldev.io (new subdomain in a route53 hosted zone that already exists)

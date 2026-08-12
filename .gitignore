@@ -1,0 +1,32 @@
+node_modules/
+.env
+.env.local
+*.local
+
+# Next.js
+web/.next/
+web/out/
+web/next-env.d.ts
+web/*.tsbuildinfo
+
+# CDK
+infra/cdk.out/
+infra/outputs.json
+infra/*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Local dev data volumes
+.dynamodb/
+.minio/
+
+# Claude
+.claude/settings.local.json

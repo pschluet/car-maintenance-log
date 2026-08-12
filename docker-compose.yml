@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      # Anonymous volumes so the bind mount above doesn't shadow what was
+      # installed/built inside the image — Docker seeds these from the
+      # image's contents on first run, then persists across restarts.
+      - /app/node_modules
+      - /app/web/node_modules
+      - /app/web/.next
+      - /app/infra/node_modules
+    environment:
+      NODE_ENV: development
+      LOCAL_AUTH: "true"
+      TABLE_NAME: CarMaintenanceLog
+      ATTACHMENTS_BUCKET: car-maintenance-log-attachments
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      S3_ENDPOINT: http://minio:9000
+      # Presigned URLs go to the browser, which is outside this compose
+      # network and can't resolve the "minio" hostname above — sign against
+      # the host-mapped port instead. See web/src/lib/s3.ts.
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_FORCE_PATH_STYLE: "true"
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: localdev
+      AWS_SECRET_ACCESS_KEY: localdev123
+      SITE_URL: http://localhost:3000
+      FROM_EMAIL: no-reply@pauldev.io
+    depends_on:
+      - dynamodb
+      - minio
+
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports:
+      - "8000:8000"
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: localdev
+      MINIO_ROOT_PASSWORD: localdev123
+    volumes:
+      - minio-data:/data
+
+volumes:
+  minio-data:

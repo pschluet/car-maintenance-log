@@ -1,0 +1,21 @@
+import { NextResponse } from "next/server";
+import { carDocInputSchema } from "@/lib/schemas";
+import { getCurrentUser } from "@/lib/session";
+import { addCarDoc } from "@/lib/repo/cars";
+
+export async function POST(req: Request, { params }: { params: Promise<{ carId: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const parsed = carDocInputSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { status: 400 }
+    );
+  }
+
+  const { carId } = await params;
+  const doc = await addCarDoc(carId, parsed.data);
+  return NextResponse.json({ doc }, { status: 201 });
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@car-maintenance-log/infra",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy --require-approval never",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.146",
+    "@types/node": "^22.10.5",
+    "aws-cdk": "^2.1033.0",
+    "esbuild": "^0.24.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.700.0",
+    "aws-cdk-lib": "^2.262.1",
+    "constructs": "^10.7.1",
+    "source-map-support": "^0.5.21"
+  }
+}
