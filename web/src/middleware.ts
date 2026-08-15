@@ -26,6 +26,17 @@ function isApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/");
 }
 
+// Emit a relative Location so the browser resolves it against the address-bar
+// origin (cars.pauldev.io in prod, localhost in dev). Building an absolute URL
+// from req.url is wrong behind CloudFront + the Lambda Function URL: the public
+// Host header is stripped by the origin-request policy, so req.url falls back to
+// the standalone server's own 0.0.0.0:PORT bind authority — which the browser
+// then refuses to open ("restricted network port"). NextResponse.redirect()
+// rejects a non-absolute URL, so set the header directly.
+function redirectTo(path: string): NextResponse {
+  return new NextResponse(null, { status: 307, headers: { Location: path } });
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   if (isPublic(pathname)) return NextResponse.next();
@@ -42,21 +53,18 @@ export async function middleware(req: NextRequest) {
     // detour through the Node-runtime refresh route: it rotates the
     // cookies if the refresh token is still valid, then bounces back here.
     const hasRefresh = req.cookies.get(COOKIE.refresh)?.value;
+    const next = encodeURIComponent(pathname + search);
     if (hasRefresh) {
-      const refreshUrl = new URL("/api/auth/refresh", req.url);
-      refreshUrl.searchParams.set("next", pathname + search);
-      return NextResponse.redirect(refreshUrl);
+      return redirectTo(`/api/auth/refresh?next=${next}`);
     }
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("next", pathname + search);
-    return NextResponse.redirect(loginUrl);
+    return redirectTo(`/login?next=${next}`);
   }
 
   if (isAdminPath(pathname) && !user.isAdmin) {
     if (isApiPath(pathname)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    return NextResponse.redirect(new URL("/", req.url));
+    return redirectTo("/");
   }
 
   return NextResponse.next();
