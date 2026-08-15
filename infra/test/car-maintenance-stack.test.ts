@@ -102,6 +102,22 @@ describe("CarMaintenanceStack", () => {
     expect(appFn.Properties.Environment?.Variables).not.toHaveProperty("LOCAL_AUTH");
   });
 
+  it("sets SITE_URL on the app Lambda so middleware can build absolute redirect URLs", () => {
+    // Behind CloudFront + the Function URL, the app never sees its own
+    // public hostname in any header — see web/src/lib/site-url.ts. Redirect
+    // correctness depends on this var being present at runtime.
+    const fns = template.findResources("AWS::Lambda::Function", {
+      Properties: { PackageType: "Image" },
+    });
+    const appFn = Object.values(fns)[0] as {
+      Properties: { Environment?: { Variables?: Record<string, unknown> } };
+    };
+    expect(appFn).toBeDefined();
+    expect(appFn.Properties.Environment?.Variables).toMatchObject({
+      SITE_URL: "https://cars.pauldev.io",
+    });
+  });
+
   it("scopes the CUSTOM_AUTH client to the custom flow only", () => {
     template.hasResourceProperties("AWS::Cognito::UserPoolClient", {
       ExplicitAuthFlows: Match.arrayWith(["ALLOW_CUSTOM_AUTH"]),

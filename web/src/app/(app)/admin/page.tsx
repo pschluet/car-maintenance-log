@@ -5,6 +5,7 @@ import { Card, PageHeader } from "@/components/ui/card";
 import { listUsers } from "@/lib/cognito";
 import { listCars } from "@/lib/repo/cars";
 import { getCurrentUser } from "@/lib/session";
+import { siteOrigin } from "@/lib/site-url";
 
 export default async function AdminPage() {
   // Middleware already restricts /admin to the Admins group; this is
@@ -28,7 +29,7 @@ export default async function AdminPage() {
         {isLocal ? (
           <Card className="text-sm text-ink-muted">
             User management talks to Cognito directly and has no local stand-in — try this against
-            the deployed app at {process.env.SITE_URL ?? "cars.pauldev.io"}.
+            the deployed app at {siteOrigin("https://cars.pauldev.io")}.
           </Card>
         ) : (
           <AdminUsersManager initialUsers={await listUsers()} currentUserEmail={user.email} />

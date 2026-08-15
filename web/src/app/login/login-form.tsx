@@ -4,13 +4,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
+import { safeNext } from "@/lib/safe-next";
 
 type Step = "email" | "code";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/";
+  // `next` is attacker-controlled query-string input: a crafted
+  // /login?next=https://evil.com link would otherwise send a freshly
+  // authenticated visitor's browser off-site via router.push() below.
+  const next = safeNext(searchParams.get("next"));
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");

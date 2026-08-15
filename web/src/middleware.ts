@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE, verifyIdToken } from "@/lib/session";
+import { siteOrigin } from "@/lib/site-url";
 
 // Everything except these paths requires a valid session. These four are
 // the only endpoints a signed-out visitor needs to reach: read the login
@@ -26,23 +27,13 @@ function isApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/");
 }
 
-// Emit a relative Location so the browser resolves it against the address-bar
-// origin (cars.pauldev.io in prod, localhost in dev). Building an absolute URL
-// from req.url is wrong behind CloudFront + the Lambda Function URL: the public
-// Host header is stripped by the origin-request policy, so req.url falls back to
-// the standalone server's own 0.0.0.0:PORT bind authority — which the browser
-// then refuses to open ("restricted network port"). NextResponse.redirect()
-// rejects a non-absolute URL, so set the header directly.
-function redirectTo(path: string): NextResponse {
-  return new NextResponse(null, { status: 307, headers: { Location: path } });
-}
-
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   if (isPublic(pathname)) return NextResponse.next();
 
   const idToken = req.cookies.get(COOKIE.id)?.value;
   const user = await verifyIdToken(idToken);
+  const base = siteOrigin(req.nextUrl.origin);
 
   if (!user) {
     if (isApiPath(pathname)) {
@@ -53,18 +44,16 @@ export async function middleware(req: NextRequest) {
     // detour through the Node-runtime refresh route: it rotates the
     // cookies if the refresh token is still valid, then bounces back here.
     const hasRefresh = req.cookies.get(COOKIE.refresh)?.value;
-    const next = encodeURIComponent(pathname + search);
-    if (hasRefresh) {
-      return redirectTo(`/api/auth/refresh?next=${next}`);
-    }
-    return redirectTo(`/login?next=${next}`);
+    const target = new URL(hasRefresh ? "/api/auth/refresh" : "/login", base);
+    target.searchParams.set("next", pathname + search);
+    return NextResponse.redirect(target);
   }
 
   if (isAdminPath(pathname) && !user.isAdmin) {
     if (isApiPath(pathname)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    return redirectTo("/");
+    return NextResponse.redirect(new URL("/", base));
   }
 
   return NextResponse.next();
